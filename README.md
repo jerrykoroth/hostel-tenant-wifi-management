@@ -53,7 +53,7 @@ I’m looking for developers who can help build the following:
 ## 🤝 How to Contribute
 
 1. Fork this repository
-2. Create a new branch: `feature/your-feature`
+2. Create a new branch: ``
 3. Submit a Pull Request
 
 ---
@@ -62,4 +62,4 @@ I’m looking for developers who can help build the following:
 
 If you're interested in helping build this, feel free to create an issue or open a pull request.
 
-You can also email me: **[your@email.com]**
+You can also email me: **[jerrykoroth@gmail.com]**
