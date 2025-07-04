@@ -1,13 +1,15 @@
 <?php
-$dbhost = 'localhost';
-$dbname = 'hostel';
-$dbuser = 'root';
-$dbpass = '';
+$host = "localhost";
+$dbname = "hostel";
+$user = "root";
+$pass = "";
 
 try {
-    $dbh = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);
-    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $dbh = $pdo; // Add this line to define $dbh as alias for $pdo
 } catch (PDOException $e) {
-    exit("Error: " . $e->getMessage());
+    die("DB ERROR: " . $e->getMessage());
 }
 ?>
+
