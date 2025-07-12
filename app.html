@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Modern Task Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✓</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">✓</span>
+                    TaskFlow
+                </h1>
+                <div class="header-stats">
+                    <span class="stat">
+                        <span class="stat-number" id="totalTasks">0</span>
+                        <span class="stat-label">Total</span>
+                    </span>
+                    <span class="stat">
+                        <span class="stat-number" id="completedTasks">0</span>
+                        <span class="stat-label">Done</span>
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="task-input-section">
+                <form class="task-form" id="taskForm">
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="taskInput" 
+                            placeholder="What needs to be done?"
+                            class="task-input"
+                            autocomplete="off"
+                            required
+                        >
+                        <select id="prioritySelect" class="priority-select" aria-label="Task priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <button type="submit" class="add-button" aria-label="Add task">
+                            <span class="add-icon">+</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="pending">Pending</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="filter-btn" data-filter="high">High Priority</button>
+            </div>
+
+            <div class="tasks-section">
+                <div class="tasks-container" id="tasksContainer">
+                    <!-- Tasks will be dynamically added here -->
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">📝</div>
+                    <h3>No tasks yet</h3>
+                    <p>Add your first task above to get started!</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-actions">
+                <button class="clear-button" id="clearCompleted">
+                    Clear Completed
+                </button>
+                <button class="export-button" id="exportTasks">
+                    Export Tasks
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
