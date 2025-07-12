@@ -2,23 +2,28 @@
 -- Tenant Management Mobile Application SQL Schema
 -- --------------------------------------------------------
 
-CREATE DATABASE IF NOT EXISTS tenant_management;
+-- Create database and use it
+CREATE DATABASE IF NOT EXISTS tenant_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tenant_management;
 
--- Users table (for authentication and role management)
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'staff', 'owner') DEFAULT 'staff',
-    hostel_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+-- Disable foreign key checks temporarily
+SET FOREIGN_KEY_CHECKS = 0;
 
--- Hostels table (organizations/hostels)
-CREATE TABLE IF NOT EXISTS hostels (
+-- Drop tables if they exist (in reverse dependency order)
+DROP TABLE IF EXISTS activity_log;
+DROP TABLE IF EXISTS checkin_history;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS tenants;
+DROP TABLE IF EXISTS beds;
+DROP TABLE IF EXISTS rooms;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS hostels;
+
+-- Re-enable foreign key checks
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Hostels table (no dependencies - create first)
+CREATE TABLE hostels (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     address TEXT NOT NULL,
@@ -26,11 +31,27 @@ CREATE TABLE IF NOT EXISTS hostels (
     email VARCHAR(100),
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_hostels_name (name)
 );
 
--- Rooms table
-CREATE TABLE IF NOT EXISTS rooms (
+-- Users table (depends on hostels)
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'staff', 'owner') DEFAULT 'staff',
+    hostel_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (hostel_id) REFERENCES hostels(id) ON DELETE SET NULL,
+    INDEX idx_users_email (email),
+    INDEX idx_users_role (role)
+);
+
+-- Rooms table (depends on hostels)
+CREATE TABLE rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     hostel_id INT NOT NULL,
     room_number VARCHAR(20) NOT NULL,
@@ -40,11 +61,12 @@ CREATE TABLE IF NOT EXISTS rooms (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (hostel_id) REFERENCES hostels(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_room_per_hostel (hostel_id, room_number)
+    UNIQUE KEY unique_room_per_hostel (hostel_id, room_number),
+    INDEX idx_rooms_hostel (hostel_id)
 );
 
--- Beds table
-CREATE TABLE IF NOT EXISTS beds (
+-- Beds table (depends on rooms)
+CREATE TABLE beds (
     id INT AUTO_INCREMENT PRIMARY KEY,
     room_id INT NOT NULL,
     bed_number VARCHAR(20) NOT NULL,
@@ -52,11 +74,13 @@ CREATE TABLE IF NOT EXISTS beds (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_bed_per_room (room_id, bed_number)
+    UNIQUE KEY unique_bed_per_room (room_id, bed_number),
+    INDEX idx_beds_status (status),
+    INDEX idx_beds_room (room_id)
 );
 
--- Tenants table
-CREATE TABLE IF NOT EXISTS tenants (
+-- Tenants table (depends on beds)
+CREATE TABLE tenants (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100),
@@ -74,11 +98,15 @@ CREATE TABLE IF NOT EXISTS tenants (
     status ENUM('active', 'inactive', 'checked_out') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (bed_id) REFERENCES beds(id) ON DELETE SET NULL
+    FOREIGN KEY (bed_id) REFERENCES beds(id) ON DELETE SET NULL,
+    INDEX idx_tenants_status (status),
+    INDEX idx_tenants_checkin (checkin_date),
+    INDEX idx_tenants_phone (phone),
+    INDEX idx_tenants_bed (bed_id)
 );
 
--- Payments table
-CREATE TABLE IF NOT EXISTS payments (
+-- Payments table (depends on tenants)
+CREATE TABLE payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
@@ -89,11 +117,15 @@ CREATE TABLE IF NOT EXISTS payments (
     receipt_number VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    INDEX idx_payments_date (date),
+    INDEX idx_payments_tenant (tenant_id),
+    INDEX idx_payments_receipt (receipt_number),
+    INDEX idx_payments_type (payment_type)
 );
 
--- Check-in/Check-out history table
-CREATE TABLE IF NOT EXISTS checkin_history (
+-- Check-in/Check-out history table (depends on tenants and beds)
+CREATE TABLE checkin_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NOT NULL,
     bed_id INT NOT NULL,
@@ -104,11 +136,14 @@ CREATE TABLE IF NOT EXISTS checkin_history (
     remarks TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-    FOREIGN KEY (bed_id) REFERENCES beds(id) ON DELETE CASCADE
+    FOREIGN KEY (bed_id) REFERENCES beds(id) ON DELETE CASCADE,
+    INDEX idx_checkin_tenant (tenant_id),
+    INDEX idx_checkin_bed (bed_id),
+    INDEX idx_checkin_date (checkin_date)
 );
 
--- Activity log table for audit trail
-CREATE TABLE IF NOT EXISTS activity_log (
+-- Activity log table (depends on users)
+CREATE TABLE activity_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     action VARCHAR(100) NOT NULL,
@@ -116,13 +151,13 @@ CREATE TABLE IF NOT EXISTS activity_log (
     ip_address VARCHAR(45),
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_activity_log_user (user_id),
+    INDEX idx_activity_log_date (created_at),
+    INDEX idx_activity_log_action (action)
 );
 
--- Add foreign key constraint for hostel_id in users table
-ALTER TABLE users ADD FOREIGN KEY (hostel_id) REFERENCES hostels(id) ON DELETE SET NULL;
-
--- Insert default admin user and sample data
+-- Insert sample data
 INSERT INTO hostels (name, address, phone, email, description) VALUES
 ('Green Valley Hostel', '123 Main Street, City Center', '+1-555-0123', 'info@greenvalley.com', 'Premium hostel with modern amenities'),
 ('Sunrise Hostel', '456 Oak Avenue, Downtown', '+1-555-0456', 'contact@sunrisehostel.com', 'Budget-friendly accommodation for students');
@@ -151,13 +186,3 @@ INSERT INTO beds (room_id, bed_number, status) VALUES
 (4, 'A', 'available'),
 (4, 'B', 'available'),
 (5, 'A', 'available');
-
--- Create indexes for better performance
-CREATE INDEX idx_tenants_status ON tenants(status);
-CREATE INDEX idx_tenants_checkin ON tenants(checkin_date);
-CREATE INDEX idx_payments_date ON payments(date);
-CREATE INDEX idx_payments_tenant ON payments(tenant_id);
-CREATE INDEX idx_beds_status ON beds(status);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_activity_log_user ON activity_log(user_id);
-CREATE INDEX idx_activity_log_date ON activity_log(created_at);

@@ -57,15 +57,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setup_action'])) {
                 $pdo = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 
-                // Read and execute SQL file
+                // Read SQL file
                 $sql = file_get_contents('database/tenant_management.sql');
                 
                 // Remove CREATE DATABASE and USE statements
                 $sql = preg_replace('/CREATE DATABASE.*?;/i', '', $sql);
                 $sql = preg_replace('/USE.*?;/i', '', $sql);
                 
-                // Execute SQL
-                $pdo->exec($sql);
+                // Split SQL into individual statements
+                $statements = array_filter(
+                    array_map('trim', explode(';', $sql)),
+                    function($stmt) {
+                        return !empty($stmt) && !preg_match('/^\s*--/', $stmt);
+                    }
+                );
+                
+                // Execute each statement separately
+                foreach ($statements as $statement) {
+                    if (!empty(trim($statement))) {
+                        $pdo->exec($statement);
+                    }
+                }
                 
                 echo json_encode(['success' => true, 'message' => 'Database tables created successfully!']);
             } catch (PDOException $e) {
