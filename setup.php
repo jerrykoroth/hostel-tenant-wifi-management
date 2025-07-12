@@ -179,9 +179,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setup_action'])) {
                     
                     "INSERT INTO hostels (name, address, phone, email, description) VALUES ('Sunrise Hostel', '456 Oak Avenue, Downtown', '+1-555-0456', 'contact@sunrisehostel.com', 'Budget-friendly accommodation for students')",
                     
-                    "INSERT INTO users (name, email, password_hash, role, hostel_id) VALUES ('Admin User', 'admin@tenantmanagement.com', '\$2y\$10\$wHfXfE3EB4h8V6IbRHfWJOsUZmkHiVim2k8Sx06aTCWhWmHAB7Uwa', 'admin', 1)",
+                    "INSERT INTO users (name, email, password_hash, role, hostel_id) VALUES ('Admin User', 'admin@tenantmanagement.com', '$2y$10$wHfXfE3EB4h8V6IbRHfWJOsUZmkHiVim2k8Sx06aTCWhWmHAB7Uwa', 'admin', 1)",
                     
-                    "INSERT INTO users (name, email, password_hash, role, hostel_id) VALUES ('Staff User', 'staff@greenvalley.com', '\$2y\$10\$wHfXfE3EB4h8V6IbRHfWJOsUZmkHiVim2k8Sx06aTCWhWmHAB7Uwa', 'staff', 1)",
+                    "INSERT INTO users (name, email, password_hash, role, hostel_id) VALUES ('Staff User', 'staff@greenvalley.com', '$2y$10$wHfXfE3EB4h8V6IbRHfWJOsUZmkHiVim2k8Sx06aTCWhWmHAB7Uwa', 'staff', 1)",
                     
                     "INSERT INTO rooms (hostel_id, room_number, capacity, monthly_rent, description) VALUES (1, '101', 2, 5000.00, 'Double sharing room with attached bathroom')",
                     
