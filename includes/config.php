@@ -2,8 +2,8 @@
 // Database Configuration
 $host = "localhost";
 $dbname = "tenant_management";
-$user = "root";
-$pass = "";
+$user = "tenantuser";
+$pass = "Pass123@";
 
 // Security Headers
 header("X-Content-Type-Options: nosniff");
