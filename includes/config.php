@@ -3,7 +3,7 @@
 $host = "localhost";
 $dbname = "tenant_management";
 $user = "tenantuser";
-$pass = "Pass123@";
+$pass = "";
 
 // Security Headers
 header("X-Content-Type-Options: nosniff");
